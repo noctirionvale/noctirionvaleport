@@ -169,10 +169,13 @@ function AIPanel({ onOpenContact, isMobile }) {
   const [response, setResponse] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
+  const [hoveredMode, setHoveredMode] = useState(null)
   const inputRef = useRef(null)
   const currentMode = MODES.find(m => m.id === mode)
   const modeColors = { ask: '#4169e1', vibe: '#b89aff', build: '#ff6a00' }
   const activeColor = modeColors[mode]
+  const previewMode = hoveredMode || mode
+  const previewColor = modeColors[previewMode]
 
   const submit = async (text) => {
     const query = (text || input).trim()
@@ -224,15 +227,23 @@ function AIPanel({ onOpenContact, isMobile }) {
   )
 
   const hintPanel = (
-    <div style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-      <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>TRY ASKING</div>
-      {HINTS[mode].map(h => (
-        <button key={h} onClick={() => handleHint(h)}
-          style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '20px', border: `1px solid ${activeColor}40`, background: `${activeColor}12`, color: 'rgba(255,255,255,0.65)', cursor: 'pointer' }}>
+    <motion.div
+      key={previewMode}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${previewColor}`, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>
+        {previewMode === 'ask' ? 'TRY ASKING' : previewMode === 'vibe' ? 'TRY A VIBE' : 'TRY DESCRIBING'}
+      </div>
+      {HINTS[previewMode].map(h => (
+        <button key={h} onClick={() => { setMode(previewMode); handleHint(h) }}
+          style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '20px', border: `1px solid ${previewColor}40`, background: `${previewColor}12`, color: 'rgba(255,255,255,0.65)', cursor: 'pointer' }}>
           {h}
         </button>
       ))}
-    </div>
+    </motion.div>
   )
 
   return (
@@ -240,8 +251,11 @@ function AIPanel({ onOpenContact, isMobile }) {
       {/* Mode tabs */}
       <div style={{ display: 'flex', borderTop: '1px solid rgba(0,0,0,0.2)' }}>
         {MODES.map(m => (
-          <button key={m.id} onClick={() => { setMode(m.id); setShowPanel(false); setResponse(''); setInput('') }}
-            style={{ flex: 1, padding: '8px 4px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.6rem', letterSpacing: '0.06em', border: 'none', cursor: 'pointer', background: mode === m.id ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.15)', color: mode === m.id ? '#fff' : 'rgba(255,255,255,0.4)', borderBottom: `2px solid ${mode === m.id ? modeColors[m.id] : 'transparent'}`, transition: 'all 0.2s' }}>
+          <button key={m.id}
+            onClick={() => { setMode(m.id); setShowPanel(false); setResponse(''); setInput(''); setHoveredMode(null) }}
+            onMouseEnter={() => { if (!showPanel) setHoveredMode(m.id) }}
+            onMouseLeave={() => setHoveredMode(null)}
+            style={{ flex: 1, padding: '8px 4px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.6rem', letterSpacing: '0.06em', border: 'none', cursor: 'pointer', background: (hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.15)', color: (hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? '#fff' : 'rgba(255,255,255,0.4)', borderBottom: `2px solid ${(hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? modeColors[m.id] : 'transparent'}`, transition: 'all 0.15s' }}>
             {m.label}
           </button>
         ))}
