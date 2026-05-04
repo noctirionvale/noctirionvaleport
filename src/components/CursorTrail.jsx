@@ -50,7 +50,7 @@ export default function CursorTrail() {
         p.life -= p.decay
         const c = colors[Math.floor(Math.random() * colors.length)]
         ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2)
+        ctx.arc(p.x, p.y, Math.max(0, p.size * p.life), 0, Math.PI * 2)
         ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},${p.life * 0.55})`
         ctx.fill()
       }
