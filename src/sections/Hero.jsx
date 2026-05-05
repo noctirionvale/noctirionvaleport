@@ -163,6 +163,115 @@ function MobileHeroFull() {
   )
 }
 
+
+function BirdCam() {
+  return (
+    <a
+      href="https://www.vaibes.pro"
+      target="_blank"
+      rel="noopener noreferrer"
+      style={{ textDecoration: 'none', position: 'absolute', zIndex: 10 }}
+    >
+      <div style={{ position: 'relative' }}>
+        {/* Curved label + arrow */}
+        <div style={{
+          position: 'absolute',
+          top: '-28px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          whiteSpace: 'nowrap',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          pointerEvents: 'none',
+        }}>
+          <span style={{
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 700,
+            fontStyle: 'italic',
+            fontSize: '0.72rem',
+            letterSpacing: '0.06em',
+            color: 'rgba(184,154,255,0.8)',
+          }}>i also watch birdcam</span>
+          <span style={{
+            fontSize: '0.8rem',
+            color: 'rgba(184,154,255,0.8)',
+            transform: 'rotate(30deg)',
+            display: 'inline-block',
+          }}>↓</span>
+        </div>
+
+        {/* Cam window */}
+        <div style={{
+          width: '180px',
+          height: '101px',
+          borderRadius: '8px',
+          overflow: 'hidden',
+          border: '1px solid rgba(184,154,255,0.25)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(184,154,255,0.1)',
+          position: 'relative',
+        }}>
+          <iframe
+            width="180"
+            height="101"
+            src="https://www.youtube.com/embed/B4-L2nfGcuE?si=0rI5qUTiYEd2CnOU&autoplay=1&mute=1&controls=0&loop=1&modestbranding=1"
+            title="Birdcam"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            style={{ display: 'block', pointerEvents: 'none' }}
+          />
+          {/* Live dot */}
+          <div style={{
+            position: 'absolute',
+            top: 6, left: 7,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            background: 'rgba(0,0,0,0.55)',
+            borderRadius: '3px',
+            padding: '2px 6px',
+          }}>
+            <span style={{
+              width: 5, height: 5,
+              borderRadius: '50%',
+              background: '#ff4444',
+              boxShadow: '0 0 5px #ff4444',
+              flexShrink: 0,
+            }} />
+            <span style={{
+              fontFamily: 'monospace',
+              fontSize: '8px',
+              color: '#fff',
+              letterSpacing: '0.1em',
+            }}>LIVE</span>
+          </div>
+          {/* Hover overlay */}
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'rgba(184,154,255,0.08)',
+            opacity: 0,
+            transition: 'opacity 0.2s',
+          }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+          />
+        </div>
+
+        {/* vaibes.pro label below */}
+        <div style={{
+          textAlign: 'center',
+          marginTop: '5px',
+          fontFamily: 'monospace',
+          fontSize: '8px',
+          letterSpacing: '0.12em',
+          color: 'rgba(255,255,255,0.2)',
+        }}>vaibes.pro</div>
+      </div>
+    </a>
+  )
+}
+
 function DesktopHero() {
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 clamp(24px,4vw,60px)', gap: '0 clamp(20px,3vw,48px)' }}>
@@ -191,7 +300,7 @@ function DesktopHero() {
       </div>
 
       {/* CENTER */}
-      <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'center', marginTop: '-80px' }}>
         <NavCard />
       </div>
 

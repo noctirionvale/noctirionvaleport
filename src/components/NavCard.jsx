@@ -66,10 +66,10 @@ function AboutContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {[
-        "Self-taught developer who pivoted into web development and within four months built and launched two fully functional SaaS products from scratch.",
+        "Self-taught developer who pivoted into web development and within months built and launched two fully functional SaaS products from scratch.",
         "Not a vibe coder — uses AI deliberately as a pair-programmer with strict manual oversight over all logic and security decisions.",
         "Has a lot to learn and openly acknowledges it. Seeking a mentorship-driven paid internship or junior role.",
-        "Background spans 7 years of running an online business, hospitality, outbound sales, and a degree in Education — all shaping a founder mindset and user-first thinking.",
+        "Background spans 7 years of running freelancing, crypto trading, online business, hospitality, outbound sales, and a degree in Education — all shaping a founder mindset and user-first thinking.",
       ].map((p, i) => (
         <p key={i} style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 300, fontSize: '0.98rem', lineHeight: 1.8, color: 'rgba(255,255,255,0.65)' }}>{p}</p>
       ))}
