@@ -304,7 +304,7 @@ function AIPanel({ onOpenContact, isMobile }) {
               animate={{ y: showPanel ? 0 : '100%' }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, borderRadius: '20px 20px 0 0', overflow: 'hidden', boxShadow: '0 -8px 60px rgba(0,0,0,0.7)' }}>
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, borderRadius: '20px 20px 0 0', overflow: 'hidden', boxShadow: '0 -8px 60px rgba(0,0,0,0.7)', paddingBottom: '0' }}>
               {/* Sheet handle */}
               <div style={{ background: 'rgba(7,9,31,0.98)', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                 <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
@@ -319,7 +319,7 @@ function AIPanel({ onOpenContact, isMobile }) {
 
       {/* Mobile hint chips — shown inline below input on mobile */}
       {isMobile && !showPanel && (
-        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, padding: '8px 10px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
+        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, padding: '8px 10px 80px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
           <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>TRY ASKING</div>
           {HINTS[mode].map(h => (
             <button key={h} onClick={() => handleHint(h)}

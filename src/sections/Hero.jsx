@@ -113,7 +113,7 @@ export default function Hero() {
 
 function MobileHeroFull() {
   return (
-    <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '80px' }}>
+    <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '140px' }}>
       {BG}
 
       {/* Top bar */}
@@ -151,7 +151,7 @@ function MobileHeroFull() {
       </div>
 
       {/* Fixed social bar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10, padding: '12px 20px 16px', background: 'linear-gradient(0deg,rgba(7,9,31,1) 50%,transparent)', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 10, padding: '16px 20px 28px', background: 'linear-gradient(0deg,rgba(7,9,31,1) 60%,rgba(7,9,31,0.9) 80%,transparent)', display: 'flex', justifyContent: 'center', gap: '24px', backdropFilter: 'blur(4px)' }}>
         {SOCIALS.map(s => (
           <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer"
             style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: '0.1em', fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', textDecoration: 'none' }}>
