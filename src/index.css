@@ -33,3 +33,5 @@ body * { cursor: none !important; }
   width: 20px; height: 20px;
   background: rgba(184,154,255,0.7);
 }
+
+input { border-bottom: none !important; }

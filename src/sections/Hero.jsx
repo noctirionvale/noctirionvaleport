@@ -35,7 +35,6 @@ function MiniClockReal() {
   )
 }
 
-// Helper to convert any YouTube URL to embed URL with controls
 function getYouTubeEmbedUrl(url) {
   if (!url) return null
   let videoId = null
@@ -56,7 +55,6 @@ function getYouTubeEmbedUrl(url) {
   return url
 }
 
-// Draggable, resizable video frame (desktop + mobile)
 function DraggableResizableBirdcam({ mobile = false, onClose }) {
   const [size, setSize] = useState({ width: mobile ? 300 : 380, height: mobile ? 169 : 214 })
   const [position, setPosition] = useState({ x: mobile ? 20 : -20, y: mobile ? 80 : 60 })
@@ -70,129 +68,155 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
   const [videoTitle, setVideoTitle] = useState('Live Stream')
   const [tempUrl, setTempUrl] = useState('')
 
-  const dragStart = useRef({ x: 0, y: 0 })
-  const resizeStart = useRef({ w: 0, h: 0, startX: 0, startY: 0 })
   const containerRef = useRef(null)
   const resizeHandleRef = useRef(null)
+  const dragStart = useRef({ x: 0, y: 0 })
+  const resizeStart = useRef({ w: 0, h: 0, startX: 0, startY: 0 })
 
-  const startDrag = useCallback((e) => {
-    const target = e.target;
-    if (target.closest('.resize-handle')) return;
-    if (target.closest('iframe')) return;
-    if (target.closest('button')) return;
-    if (target.closest('a')) return;
-    if (target.closest('input')) return;
+  // ---------- Mouse drag (desktop) ----------
+  const startDragMouse = useCallback((e) => {
+    if (e.target.closest('.resize-handle')) return
+    if (e.target.closest('iframe')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('a')) return
+    if (e.target.closest('input')) return
+    e.preventDefault()
+    setIsDragging(true)
+    dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y }
+  }, [position.x, position.y])
 
-    e.preventDefault();
-    setIsDragging(true);
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    if (!clientX || !clientY) return;
-    dragStart.current = { x: clientX - position.x, y: clientY - position.y };
-  }, [position.x, position.y]);
+  const onDragMoveMouse = useCallback((e) => {
+    if (!isDragging) return
+    setPosition({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })
+  }, [isDragging])
 
-  const onDragMove = useCallback((e) => {
-    if (!isDragging) return;
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    if (!clientX || !clientY) return;
-    setPosition({ x: clientX - dragStart.current.x, y: clientY - dragStart.current.y });
-  }, [isDragging]);
-
-  const stopDrag = useCallback(() => setIsDragging(false), []);
+  const stopDrag = useCallback(() => setIsDragging(false), [])
 
   useEffect(() => {
     if (isDragging) {
-      const opts = { passive: false };
-      window.addEventListener('mousemove', onDragMove);
-      window.addEventListener('mouseup', stopDrag);
-      window.addEventListener('touchmove', onDragMove, opts);
-      window.addEventListener('touchend', stopDrag);
+      window.addEventListener('mousemove', onDragMoveMouse)
+      window.addEventListener('mouseup', stopDrag)
       return () => {
-        window.removeEventListener('mousemove', onDragMove);
-        window.removeEventListener('mouseup', stopDrag);
-        window.removeEventListener('touchmove', onDragMove);
-        window.removeEventListener('touchend', stopDrag);
-      };
+        window.removeEventListener('mousemove', onDragMoveMouse)
+        window.removeEventListener('mouseup', stopDrag)
+      }
     }
-  }, [isDragging, onDragMove, stopDrag]);
+  }, [isDragging, onDragMoveMouse, stopDrag])
 
-  const startResize = useCallback((e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsResizing(true);
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    if (!clientX || !clientY) return;
-    resizeStart.current = { w: size.width, h: size.height, startX: clientX, startY: clientY };
-  }, [size.width, size.height]);
+  // ---------- Touch drag (mobile) with passive: false ----------
+  const startDragTouch = useCallback((e) => {
+    if (e.target.closest('.resize-handle')) return
+    if (e.target.closest('iframe')) return
+    if (e.target.closest('button')) return
+    if (e.target.closest('a')) return
+    if (e.target.closest('input')) return
+    e.preventDefault()
+    setIsDragging(true)
+    const touch = e.touches[0]
+    dragStart.current = { x: touch.clientX - position.x, y: touch.clientY - position.y }
+  }, [position.x, position.y])
 
-  const onResizeMove = useCallback((e) => {
-    if (!isResizing) return;
-    const clientX = e.clientX ?? e.touches?.[0]?.clientX;
-    const clientY = e.clientY ?? e.touches?.[0]?.clientY;
-    if (!clientX || !clientY) return;
-    const deltaX = clientX - resizeStart.current.startX;
-    const deltaY = clientY - resizeStart.current.startY;
-    const newW = Math.max(mobile ? 240 : 280, resizeStart.current.w + deltaX);
-    const newH = Math.max(mobile ? 135 : 160, resizeStart.current.h + deltaY);
-    setSize({ width: newW, height: newH });
-  }, [isResizing, mobile]);
+  const onDragMoveTouch = useCallback((e) => {
+    if (!isDragging) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    setPosition({ x: touch.clientX - dragStart.current.x, y: touch.clientY - dragStart.current.y })
+  }, [isDragging])
 
-  const stopResize = useCallback(() => setIsResizing(false), []);
+  const stopDragTouch = useCallback((e) => {
+    setIsDragging(false)
+    e.preventDefault()
+  }, [])
+
+  // ---------- Resize (mouse + touch) ----------
+  const startResizeMouse = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    resizeStart.current = { w: size.width, h: size.height, startX: e.clientX, startY: e.clientY }
+  }, [size.width, size.height])
+
+  const onResizeMoveMouse = useCallback((e) => {
+    if (!isResizing) return
+    const deltaX = e.clientX - resizeStart.current.startX
+    const deltaY = e.clientY - resizeStart.current.startY
+    const newW = Math.max(mobile ? 240 : 280, resizeStart.current.w + deltaX)
+    const newH = Math.max(mobile ? 135 : 160, resizeStart.current.h + deltaY)
+    setSize({ width: newW, height: newH })
+  }, [isResizing, mobile])
+
+  const stopResizeMouse = useCallback(() => setIsResizing(false), [])
 
   useEffect(() => {
     if (isResizing) {
-      const opts = { passive: false };
-      window.addEventListener('mousemove', onResizeMove);
-      window.addEventListener('mouseup', stopResize);
-      window.addEventListener('touchmove', onResizeMove, opts);
-      window.addEventListener('touchend', stopResize);
+      window.addEventListener('mousemove', onResizeMoveMouse)
+      window.addEventListener('mouseup', stopResizeMouse)
       return () => {
-        window.removeEventListener('mousemove', onResizeMove);
-        window.removeEventListener('mouseup', stopResize);
-        window.removeEventListener('touchmove', onResizeMove);
-        window.removeEventListener('touchend', stopResize);
-      };
+        window.removeEventListener('mousemove', onResizeMoveMouse)
+        window.removeEventListener('mouseup', stopResizeMouse)
+      }
     }
-  }, [isResizing, onResizeMove, stopResize]);
+  }, [isResizing, onResizeMoveMouse, stopResizeMouse])
 
-  // Native touchstart for mobile (ensures preventDefault works)
+  const startResizeTouch = useCallback((e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    const touch = e.touches[0]
+    resizeStart.current = { w: size.width, h: size.height, startX: touch.clientX, startY: touch.clientY }
+  }, [size.width, size.height])
+
+  const onResizeMoveTouch = useCallback((e) => {
+    if (!isResizing) return
+    e.preventDefault()
+    const touch = e.touches[0]
+    const deltaX = touch.clientX - resizeStart.current.startX
+    const deltaY = touch.clientY - resizeStart.current.startY
+    const newW = Math.max(mobile ? 240 : 280, resizeStart.current.w + deltaX)
+    const newH = Math.max(mobile ? 135 : 160, resizeStart.current.h + deltaY)
+    setSize({ width: newW, height: newH })
+  }, [isResizing, mobile])
+
+  const stopResizeTouch = useCallback((e) => {
+    setIsResizing(false)
+    e.preventDefault()
+  }, [])
+
+  // Attach native touch listeners with { passive: false }
   useEffect(() => {
-    if (!mobile) return;
-    const container = containerRef.current;
-    const handle = resizeHandleRef.current;
-    if (!container || !handle) return;
-    const touchStartContainer = (e) => {
-      if (e.target.closest('.resize-handle')) return;
-      if (e.target.closest('iframe')) return;
-      if (e.target.closest('button')) return;
-      if (e.target.closest('a')) return;
-      if (e.target.closest('input')) return;
-      e.preventDefault();
-      startDrag(e);
-    };
-    const touchStartHandle = (e) => { e.preventDefault(); startResize(e); };
-    container.addEventListener('touchstart', touchStartContainer, { passive: false });
-    handle.addEventListener('touchstart', touchStartHandle, { passive: false });
+    const container = containerRef.current
+    const handle = resizeHandleRef.current
+    if (!container || !handle) return
+
+    container.addEventListener('touchstart', startDragTouch, { passive: false })
+    container.addEventListener('touchmove', onDragMoveTouch, { passive: false })
+    container.addEventListener('touchend', stopDragTouch, { passive: false })
+    handle.addEventListener('touchstart', startResizeTouch, { passive: false })
+    handle.addEventListener('touchmove', onResizeMoveTouch, { passive: false })
+    handle.addEventListener('touchend', stopResizeTouch, { passive: false })
+
     return () => {
-      container.removeEventListener('touchstart', touchStartContainer);
-      handle.removeEventListener('touchstart', touchStartHandle);
-    };
-  }, [mobile, startDrag, startResize]);
+      container.removeEventListener('touchstart', startDragTouch)
+      container.removeEventListener('touchmove', onDragMoveTouch)
+      container.removeEventListener('touchend', stopDragTouch)
+      handle.removeEventListener('touchstart', startResizeTouch)
+      handle.removeEventListener('touchmove', onResizeMoveTouch)
+      handle.removeEventListener('touchend', stopResizeTouch)
+    }
+  }, [startDragTouch, onDragMoveTouch, stopDragTouch, startResizeTouch, onResizeMoveTouch, stopResizeTouch])
 
   const applyVideoSource = () => {
-    if (!tempUrl.trim()) return;
-    const newEmbed = getYouTubeEmbedUrl(tempUrl.trim());
+    if (!tempUrl.trim()) return
+    const newEmbed = getYouTubeEmbedUrl(tempUrl.trim())
     if (!newEmbed || newEmbed === tempUrl.trim()) {
-      alert('Invalid YouTube URL. Please provide a valid YouTube link (watch?v= or youtu.be).');
-      return;
+      alert('Invalid YouTube URL. Please provide a valid YouTube link (watch?v= or youtu.be).')
+      return
     }
-    setVideoUrl(newEmbed);
-    setVideoTitle('Custom');
-    setEditMode(false);
-    setTempUrl('');
-  };
+    setVideoUrl(newEmbed)
+    setVideoTitle('Custom')
+    setEditMode(false)
+    setTempUrl('')
+  }
 
   const frameContent = () => (
     <div
@@ -211,18 +235,11 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         display: 'flex',
         flexDirection: 'column',
         cursor: 'grab',
+        touchAction: 'none',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onMouseDown={startDrag}
-      onTouchStart={(e) => {
-        if (e.target.closest('.resize-handle')) return;
-        if (e.target.closest('iframe')) return;
-        if (e.target.closest('button')) return;
-        if (e.target.closest('a')) return;
-        if (e.target.closest('input')) return;
-        startDrag(e);
-      }}
+      onMouseDown={startDragMouse}
     >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', borderBottom: '1px solid rgba(184,154,255,0.15)', background: 'rgba(184,154,255,0.04)', userSelect: 'none' }}>
@@ -232,7 +249,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         </div>
         <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontStyle: 'italic', fontSize: '0.78rem', letterSpacing: '0.12em', color: 'rgba(184,154,255,0.7)', textTransform: 'uppercase' }}>{videoTitle}</span>
         {mobile && onClose && (
-          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem', padding: '4px 8px', zIndex: 20 }}>✕</button>
+          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem', padding: '4px 8px', zIndex: 20 }}>✕</button>
         )}
         {!mobile && (
           <div style={{ display: 'flex', gap: '3px' }}>
@@ -247,11 +264,10 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px)' }} />
         <div style={{ position: 'absolute', top: 8, left: 8, width: 14, height: 14, borderTop: '1px solid rgba(184,154,255,0.6)', borderLeft: '1px solid rgba(184,154,255,0.6)' }} />
         <div style={{ position: 'absolute', bottom: 8, right: 8, width: 14, height: 14, borderBottom: '1px solid rgba(184,154,255,0.6)', borderRight: '1px solid rgba(184,154,255,0.6)' }} />
-        {/* Resize handle with class */}
         <div
           ref={resizeHandleRef}
           className="resize-handle"
-          onMouseDown={startResize}
+          onMouseDown={startResizeMouse}
           style={{
             position: 'absolute',
             bottom: 0,
@@ -278,7 +294,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', borderTop: '1px solid rgba(184,154,255,0.1)', background: 'rgba(184,154,255,0.02)', gap: '10px', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Clock />
-          <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontStyle: 'italic', fontSize: '0.7rem', letterSpacing: '0.06em', color: 'rgba(184,154,255,0.55)' }}>i also watch livestream</span>
+          <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontStyle: 'italic', fontSize: '0.7rem', letterSpacing: '0.06em', color: 'rgba(184,154,255,0.55)' }}> also watch livestream</span>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <a href="https://www.vaibes.pro" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'monospace', fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(184,154,255,0.6)', textDecoration: 'none' }}>vaibes.pro ↗</a>
@@ -294,7 +310,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         </div>
       </div>
     </div>
-  );
+  )
 
   if (!mobile) {
     return (
@@ -302,7 +318,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         {frameContent()}
         <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
       </div>
-    );
+    )
   }
 
   return (
@@ -312,7 +328,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
       </div>
       <style>{`@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
     </>
-  );
+  )
 }
 
 export default function Hero() {
@@ -324,22 +340,26 @@ export default function Hero() {
       <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '180px', overflowX: 'hidden' }}>
         {BG}
 
-        {/* Top bar: NV — 2026 | OPEN TO WORK | SOCIALS | CLOCK */}
-        <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', padding: '12px 20px', gap: '12px' }}>
+        {/* Top bar line 1 */}
+        <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 0 20px' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.14)' }}>NV — 2026</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(184,154,255,0.65)', border: '1px solid rgba(184,154,255,0.2)', borderRadius: '3px', padding: '3px 8px' }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#7fff7f', boxShadow: '0 0 6px #7fff7f' }} />
-              OPEN TO WORK
-            </div>
-            <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-              {SOCIALS.map(s => <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: '0.1em', fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>{s.label}</a>)}
-            </div>
-            <MiniClockReal />
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(184,154,255,0.65)', border: '1px solid rgba(184,154,255,0.2)', borderRadius: '3px', padding: '3px 8px' }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#7fff7f', boxShadow: '0 0 6px #7fff7f' }} />
+            OPEN TO WORK
           </div>
+          <MiniClockReal />
         </div>
 
-        {/* Header text */}
+        {/* Top bar line 2: Socials */}
+        <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', gap: '24px', padding: '8px 20px 12px 20px', borderBottom: '1px solid rgba(184,154,255,0.1)' }}>
+          {SOCIALS.map(s => (
+            <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: '0.1em', fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
+              {s.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Header content */}
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 24px', width: '100%' }}>
           <GlitchWordmark />
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.18em', color: '#fff', marginTop: '2px' }}>NOCTIRION VALE</div>
@@ -352,28 +372,7 @@ export default function Hero() {
         </div>
 
         {!mobileBirdcamOpen ? (
-          <button
-            onClick={() => setMobileBirdcamOpen(true)}
-            style={{
-              position: 'relative',
-              zIndex: 2,
-              marginTop: '20px',
-              width: '88vw',
-              padding: '10px 12px',
-              background: 'rgba(7,9,31,0.85)',
-              border: '1px solid rgba(184,154,255,0.35)',
-              borderRadius: '8px',
-              color: 'rgba(184,154,255,0.7)',
-              fontFamily: "'Barlow Condensed',sans-serif",
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              letterSpacing: '0.1em',
-              cursor: 'pointer',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            🎥 Open Live Stream
-          </button>
+          <button onClick={() => setMobileBirdcamOpen(true)} style={{ position: 'relative', zIndex: 2, marginTop: '20px', width: '88vw', padding: '10px 12px', background: 'rgba(7,9,31,0.85)', border: '1px solid rgba(184,154,255,0.35)', borderRadius: '8px', color: 'rgba(184,154,255,0.7)', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.1em', cursor: 'pointer', backdropFilter: 'blur(8px)' }}>🎥 Open Live Stream</button>
         ) : (
           <DraggableResizableBirdcam mobile={true} onClose={() => setMobileBirdcamOpen(false)} />
         )}
@@ -385,14 +384,13 @@ export default function Hero() {
     )
   }
 
-  // Desktop remains unchanged
+  // Desktop version (unchanged)
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 clamp(24px,4vw,60px)', gap: '0 clamp(20px,3vw,48px)' }}>
       {BG}
       <div style={{ position: 'absolute', top: 18, left: 22, zIndex: 2, fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.14)' }}>NV — 2026</div>
       <div style={{ position: 'absolute', top: 18, right: 22, zIndex: 2, fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.14)' }}>PORTFOLIO v2</div>
 
-      {/* LEFT */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', gap: '20px' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontFamily: 'monospace', fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(184,154,255,0.65)', border: '1px solid rgba(184,154,255,0.2)', borderRadius: '3px', padding: '4px 10px', width: 'fit-content' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7fff7f', boxShadow: '0 0 6px #7fff7f' }} />
@@ -410,12 +408,10 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* CENTER */}
       <div style={{ position: 'relative', zIndex: 2, display: 'flex', justifyContent: 'center', marginTop: '-210px' }}>
         <NavCard />
       </div>
 
-      {/* RIGHT */}
       <div style={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end', paddingTop: '32px', paddingBottom: '32px', gap: '24px' }}>
         <DraggableResizableBirdcam mobile={false} />
         <div style={{ display: 'flex', gap: '18px', paddingBottom: '4px' }}>

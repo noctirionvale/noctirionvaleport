@@ -233,7 +233,7 @@ function AIPanel({ onOpenContact, isMobile }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${previewColor}`, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `2px solid transparent`, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
       <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>
         {previewMode === 'ask' ? 'TRY ASKING' : previewMode === 'vibe' ? 'TRY A VIBE' : 'TRY DESCRIBING'}
       </div>
@@ -262,7 +262,7 @@ function AIPanel({ onOpenContact, isMobile }) {
       </div>
 
       {/* Input row */}
-      <div style={{ display: 'flex', background: '#fff' }}>
+      <div style={{ display: 'flex', background: '#fff', borderBottom: 'none', boxShadow: 'none' }}>
         <input ref={inputRef}
           style={{ flex: 1, padding: '12px 14px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.88rem', letterSpacing: '0.06em', border: 'none', outline: 'none', background: 'transparent', color: '#1a0800' }}
           placeholder={currentMode.placeholder}
