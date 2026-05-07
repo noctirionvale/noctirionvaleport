@@ -66,10 +66,10 @@ function AboutContent() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {[
-        "Self-taught developer who pivoted into web development and within months built and launched two fully functional SaaS products from scratch.",
+        "Self-taught developer who pivoted into web development and within four months built and launched two fully functional SaaS products from scratch.",
         "Not a vibe coder — uses AI deliberately as a pair-programmer with strict manual oversight over all logic and security decisions.",
         "Has a lot to learn and openly acknowledges it. Seeking a mentorship-driven paid internship or junior role.",
-        "Background spans 7 years of running freelancing, crypto trading, online business, hospitality, outbound sales, and a degree in Education — all shaping a founder mindset and user-first thinking.",
+        "Background spans 7 years of running an online business, hospitality, outbound sales, and a degree in Education — all shaping a founder mindset and user-first thinking.",
       ].map((p, i) => (
         <p key={i} style={{ fontFamily: "'DM Sans',sans-serif", fontWeight: 300, fontSize: '0.98rem', lineHeight: 1.8, color: 'rgba(255,255,255,0.65)' }}>{p}</p>
       ))}
@@ -188,7 +188,8 @@ function AIPanel({ onOpenContact, isMobile }) {
       const data = await res.json()
       if (data.reply) {
         let i = 0
-        const chars = data.reply
+        const rawReply = data.reply.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^\d+\.\s/gm, '').trim()
+        const chars = rawReply
         const typeNext = () => {
           if (i < chars.length) { setResponse(chars.slice(0, i + 1)); i++; setTimeout(typeNext, 12) }
           else setLoading(false)
@@ -203,7 +204,7 @@ function AIPanel({ onOpenContact, isMobile }) {
   const handleHint = (hint) => { setInput(hint); submit(hint) }
 
   const responsePanel = (
-    <div style={{ background: 'rgba(7,9,31,0.98)', borderTop: `2px solid ${activeColor}`, padding: '14px 16px 12px', overflowY: 'auto', maxHeight: isMobile ? '50vh' : '220px' }}>
+    <div style={{ background: 'rgba(7,9,31,0.98)', borderTop: `2px solid ${activeColor}`, padding: '14px 16px 80px', overflowY: 'auto', maxHeight: isMobile ? '65vh' : '220px' }}>
       <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.14em', color: activeColor, marginBottom: '8px', opacity: 0.8 }}>
         {mode === 'ask' ? '🤖 PORTFOLIO AI' : mode === 'vibe' ? '🎨 VIBE CHECK' : '🔧 SCOPE REPORT'}
       </div>
@@ -212,7 +213,7 @@ function AIPanel({ onOpenContact, isMobile }) {
       </div>
       {!loading && response && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-          style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', paddingBottom: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <button onClick={() => { setShowPanel(false); setResponse(''); inputRef.current?.focus() }}
             style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
             ASK AGAIN
@@ -262,7 +263,7 @@ function AIPanel({ onOpenContact, isMobile }) {
       </div>
 
       {/* Input row */}
-      <div style={{ display: 'flex', background: '#fff', borderBottom: 'none', boxShadow: 'none' }}>
+      <div style={{ display: 'flex', background: '#fff' }}>
         <input ref={inputRef}
           style={{ flex: 1, padding: '12px 14px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.88rem', letterSpacing: '0.06em', border: 'none', outline: 'none', background: 'transparent', color: '#1a0800' }}
           placeholder={currentMode.placeholder}
@@ -306,10 +307,11 @@ function AIPanel({ onOpenContact, isMobile }) {
               transition={{ type: 'spring', stiffness: 300, damping: 32 }}
               style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, borderRadius: '20px 20px 0 0', overflow: 'hidden', boxShadow: '0 -8px 60px rgba(0,0,0,0.7)', paddingBottom: '0' }}>
               {/* Sheet handle */}
-              <div style={{ background: 'rgba(7,9,31,0.98)', padding: '12px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+              <div style={{ background: 'rgba(7,9,31,0.98)', padding: '10px 16px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ width: 32, height: 1 }} />
                 <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
                 <button onClick={() => { setShowPanel(false); setResponse('') }}
-                  style={{ position: 'absolute', top: 14, right: 16, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '1rem', cursor: 'pointer' }}>✕</button>
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: 28, height: 28, color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
               {!showPanel ? hintPanel : responsePanel}
             </motion.div>
@@ -319,7 +321,7 @@ function AIPanel({ onOpenContact, isMobile }) {
 
       {/* Mobile hint chips — shown inline below input on mobile */}
       {isMobile && !showPanel && (
-        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, padding: '8px 10px 80px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
+        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, padding: '8px 10px 100px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
           <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>TRY ASKING</div>
           {HINTS[mode].map(h => (
             <button key={h} onClick={() => handleHint(h)}
@@ -348,14 +350,15 @@ const MODAL_CONTENT = {
   contact:  { title: 'SEND A MESSAGE', Content: ContactContent  },
 }
 
-export default function NavCard() {
+export default function NavCard({ mobileWidth }) {
   const [open, setOpen] = useState(null)
   const isMobile = useIsMobile()
+  const cardWidth = isMobile ? (mobileWidth || '88vw') : '260px'
 
   return (
     <>
       <motion.div
-        style={{ background: 'linear-gradient(180deg,#ff8c00 0%,#ff6a00 30%,#ff4500 60%,#c8720a 80%,#7a2e04 100%)', borderRadius: '18px', overflow: 'visible', boxShadow: '0 8px 40px rgba(255,80,0,0.35),0 2px 8px rgba(0,0,0,0.6)', width: isMobile ? '88vw' : '260px', maxWidth: '320px', position: 'relative' }}
+        style={{ background: 'linear-gradient(180deg,#ff8c00 0%,#ff6a00 30%,#ff4500 60%,#c8720a 80%,#7a2e04 100%)', borderRadius: '18px', overflow: 'visible', boxShadow: '0 8px 40px rgba(255,80,0,0.35),0 2px 8px rgba(0,0,0,0.6)', width: cardWidth, maxWidth: '420px', position: 'relative' }}
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.3 }}
@@ -366,7 +369,7 @@ export default function NavCard() {
               whileHover={{ y: -3, filter: 'brightness(1.12)' }}
               whileTap={{ scale: 0.98 }}
               transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-              style={{ display: 'block', width: '100%', padding: isMobile ? '16px 20px' : '15px 20px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: isMobile ? '1.25rem' : '1.15rem', letterSpacing: '0.08em', textAlign: 'center', color: '#1a0800', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.18)', background: `linear-gradient(180deg,hsl(${24 - i * 6},100%,${62 - i * 6}%) 0%,hsl(${22 - i * 6},100%,${54 - i * 6}%) 100%)` }}>
+              style={{ display: 'block', width: '100%', padding: isMobile ? '9px 20px' : '15px 20px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: isMobile ? '1rem' : '1.15rem', letterSpacing: '0.08em', textAlign: 'center', color: '#1a0800', border: 'none', cursor: 'pointer', borderBottom: '1px solid rgba(0,0,0,0.18)', background: `linear-gradient(180deg,hsl(${24 - i * 6},100%,${62 - i * 6}%) 0%,hsl(${22 - i * 6},100%,${54 - i * 6}%) 100%)` }}>
               {item.label}
             </motion.button>
           ))}
