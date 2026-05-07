@@ -68,18 +68,13 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
   const [videoTitle, setVideoTitle] = useState('Live Stream')
   const [tempUrl, setTempUrl] = useState('')
 
-  const containerRef = useRef(null)
+  const headerRef = useRef(null)
   const resizeHandleRef = useRef(null)
   const dragStart = useRef({ x: 0, y: 0 })
   const resizeStart = useRef({ w: 0, h: 0, startX: 0, startY: 0 })
 
   // ---------- Mouse drag (desktop) ----------
   const startDragMouse = useCallback((e) => {
-    if (e.target.closest('.resize-handle')) return
-    if (e.target.closest('iframe')) return
-    if (e.target.closest('button')) return
-    if (e.target.closest('a')) return
-    if (e.target.closest('input')) return
     e.preventDefault()
     setIsDragging(true)
     dragStart.current = { x: e.clientX - position.x, y: e.clientY - position.y }
@@ -87,7 +82,10 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
 
   const onDragMoveMouse = useCallback((e) => {
     if (!isDragging) return
-    setPosition({ x: e.clientX - dragStart.current.x, y: e.clientY - dragStart.current.y })
+    setPosition({
+      x: e.clientX - dragStart.current.x,
+      y: e.clientY - dragStart.current.y,
+    })
   }, [isDragging])
 
   const stopDrag = useCallback(() => setIsDragging(false), [])
@@ -103,13 +101,8 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
     }
   }, [isDragging, onDragMoveMouse, stopDrag])
 
-  // ---------- Touch drag (mobile) with passive: false ----------
+  // ---------- Touch drag (mobile) – only on header ----------
   const startDragTouch = useCallback((e) => {
-    if (e.target.closest('.resize-handle')) return
-    if (e.target.closest('iframe')) return
-    if (e.target.closest('button')) return
-    if (e.target.closest('a')) return
-    if (e.target.closest('input')) return
     e.preventDefault()
     setIsDragging(true)
     const touch = e.touches[0]
@@ -120,13 +113,29 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
     if (!isDragging) return
     e.preventDefault()
     const touch = e.touches[0]
-    setPosition({ x: touch.clientX - dragStart.current.x, y: touch.clientY - dragStart.current.y })
+    setPosition({
+      x: touch.clientX - dragStart.current.x,
+      y: touch.clientY - dragStart.current.y,
+    })
   }, [isDragging])
 
   const stopDragTouch = useCallback((e) => {
     setIsDragging(false)
     e.preventDefault()
   }, [])
+
+  useEffect(() => {
+    const header = headerRef.current
+    if (!mobile || !header) return
+    header.addEventListener('touchstart', startDragTouch, { passive: false })
+    header.addEventListener('touchmove', onDragMoveTouch, { passive: false })
+    header.addEventListener('touchend', stopDragTouch, { passive: false })
+    return () => {
+      header.removeEventListener('touchstart', startDragTouch)
+      header.removeEventListener('touchmove', onDragMoveTouch)
+      header.removeEventListener('touchend', stopDragTouch)
+    }
+  }, [mobile, startDragTouch, onDragMoveTouch, stopDragTouch])
 
   // ---------- Resize (mouse + touch) ----------
   const startResizeMouse = useCallback((e) => {
@@ -182,28 +191,18 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
     e.preventDefault()
   }, [])
 
-  // Attach native touch listeners with { passive: false }
   useEffect(() => {
-    const container = containerRef.current
     const handle = resizeHandleRef.current
-    if (!container || !handle) return
-
-    container.addEventListener('touchstart', startDragTouch, { passive: false })
-    container.addEventListener('touchmove', onDragMoveTouch, { passive: false })
-    container.addEventListener('touchend', stopDragTouch, { passive: false })
+    if (!mobile || !handle) return
     handle.addEventListener('touchstart', startResizeTouch, { passive: false })
     handle.addEventListener('touchmove', onResizeMoveTouch, { passive: false })
     handle.addEventListener('touchend', stopResizeTouch, { passive: false })
-
     return () => {
-      container.removeEventListener('touchstart', startDragTouch)
-      container.removeEventListener('touchmove', onDragMoveTouch)
-      container.removeEventListener('touchend', stopDragTouch)
       handle.removeEventListener('touchstart', startResizeTouch)
       handle.removeEventListener('touchmove', onResizeMoveTouch)
       handle.removeEventListener('touchend', stopResizeTouch)
     }
-  }, [startDragTouch, onDragMoveTouch, stopDragTouch, startResizeTouch, onResizeMoveTouch, stopResizeTouch])
+  }, [mobile, startResizeTouch, onResizeMoveTouch, stopResizeTouch])
 
   const applyVideoSource = () => {
     if (!tempUrl.trim()) return
@@ -218,9 +217,13 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
     setTempUrl('')
   }
 
+  const resetPosition = () => {
+    const defaultPos = mobile ? { x: 20, y: 80 } : { x: -20, y: 60 }
+    setPosition(defaultPos)
+  }
+
   const frameContent = () => (
     <div
-      ref={containerRef}
       style={{
         border: '1px solid rgba(184,154,255,0.35)',
         borderRadius: '6px',
@@ -234,28 +237,48 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         width: size.width,
         display: 'flex',
         flexDirection: 'column',
-        cursor: 'grab',
-        touchAction: 'none',
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onMouseDown={startDragMouse}
     >
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', borderBottom: '1px solid rgba(184,154,255,0.15)', background: 'rgba(184,154,255,0.04)', userSelect: 'none' }}>
+      {/* Header – draggable area */}
+      <div
+        ref={headerRef}
+        onMouseDown={startDragMouse}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '7px 12px',
+          borderBottom: '1px solid rgba(184,154,255,0.15)',
+          background: 'rgba(184,154,255,0.04)',
+          userSelect: 'none',
+          cursor: 'grab',
+          touchAction: 'none',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 6px #ff4444', animation: 'blink 1.4s infinite' }} />
           <span style={{ fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>LIVE</span>
         </div>
         <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontStyle: 'italic', fontSize: '0.78rem', letterSpacing: '0.12em', color: 'rgba(184,154,255,0.7)', textTransform: 'uppercase' }}>{videoTitle}</span>
-        {mobile && onClose && (
-          <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1.2rem', padding: '4px 8px', zIndex: 20 }}>✕</button>
-        )}
-        {!mobile && (
-          <div style={{ display: 'flex', gap: '3px' }}>
-            {[0,1,2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: i === 0 ? 'rgba(184,154,255,0.5)' : 'rgba(255,255,255,0.1)' }} />)}
-          </div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>⋮⋮</span>
+          {mobile && onClose && (
+            <button
+              onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '1rem', padding: '0 4px' }}
+            >
+              ✕
+            </button>
+          )}
+          {!mobile && (
+            <div style={{ display: 'flex', gap: '3px' }}>
+              {[0,1,2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: i === 0 ? 'rgba(184,154,255,0.5)' : 'rgba(255,255,255,0.1)' }} />)}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Video iframe */}
@@ -295,16 +318,56 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Clock />
           <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontStyle: 'italic', fontSize: '0.7rem', letterSpacing: '0.06em', color: 'rgba(184,154,255,0.55)' }}> also watch livestream</span>
+          <button
+            onClick={resetPosition}
+            onTouchEnd={(e) => { e.stopPropagation(); resetPosition(); }}
+            style={{ background: 'none', border: 'none', color: 'rgba(184,154,255,0.6)', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
+            title="Reset position"
+          >
+            ⟳
+          </button>
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <a href="https://www.vaibes.pro" target="_blank" rel="noopener noreferrer" style={{ fontFamily: 'monospace', fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(184,154,255,0.6)', textDecoration: 'none' }}>vaibes.pro ↗</a>
+          <a
+            href="https://www.vaibes.pro"
+            target="_blank"
+            rel="noopener noreferrer"
+            onTouchEnd={(e) => e.stopPropagation()}
+            style={{ fontFamily: 'monospace', fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(184,154,255,0.6)', textDecoration: 'none', pointerEvents: 'auto' }}
+          >
+            vaibes.pro ↗
+          </a>
           {!editMode ? (
-            <button onClick={() => setEditMode(true)} style={{ background: 'none', border: 'none', color: 'rgba(184,154,255,0.5)', cursor: 'pointer', fontSize: '9px', fontFamily: 'monospace' }}>🎬 source</button>
+            <button
+              onTouchEnd={(e) => { e.stopPropagation(); setEditMode(true); }}
+              onClick={() => setEditMode(true)}
+              style={{ background: 'none', border: 'none', color: 'rgba(184,154,255,0.5)', cursor: 'pointer', fontSize: '9px', fontFamily: 'monospace' }}
+            >
+              🎬 source
+            </button>
           ) : (
             <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
-              <input type="text" value={tempUrl} onChange={e => setTempUrl(e.target.value)} placeholder="Paste YouTube URL" style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(184,154,255,0.3)', borderRadius: '3px', padding: '2px 6px', fontSize: '9px', color: '#fff', width: '130px' }} />
-              <button onClick={applyVideoSource} style={{ background: 'none', border: 'none', color: '#7fff7f', cursor: 'pointer', fontSize: '9px' }}>✓</button>
-              <button onClick={() => setEditMode(false)} style={{ background: 'none', border: 'none', color: '#ff9999', cursor: 'pointer', fontSize: '9px' }}>✗</button>
+              <input
+                type="text"
+                value={tempUrl}
+                onChange={e => setTempUrl(e.target.value)}
+                placeholder="Paste YouTube URL"
+                style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(184,154,255,0.3)', borderRadius: '3px', padding: '2px 6px', fontSize: '9px', color: '#fff', width: '130px', pointerEvents: 'auto' }}
+              />
+              <button
+                onTouchEnd={(e) => { e.stopPropagation(); applyVideoSource(); }}
+                onClick={applyVideoSource}
+                style={{ background: 'none', border: 'none', color: '#7fff7f', cursor: 'pointer', fontSize: '9px' }}
+              >
+                ✓
+              </button>
+              <button
+                onTouchEnd={(e) => { e.stopPropagation(); setEditMode(false); }}
+                onClick={() => setEditMode(false)}
+                style={{ background: 'none', border: 'none', color: '#ff9999', cursor: 'pointer', fontSize: '9px' }}
+              >
+                ✗
+              </button>
             </div>
           )}
         </div>
@@ -340,7 +403,6 @@ export default function Hero() {
       <div style={{ width: '100vw', minHeight: '100vh', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '180px', overflowX: 'hidden' }}>
         {BG}
 
-        {/* Top bar line 1 */}
         <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px 0 20px' }}>
           <div style={{ fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, letterSpacing: '0.15em', color: 'rgba(255,255,255,0.14)' }}>NV — 2026</div>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', fontFamily: 'monospace', fontSize: '9px', fontWeight: 700, letterSpacing: '0.14em', color: 'rgba(184,154,255,0.65)', border: '1px solid rgba(184,154,255,0.2)', borderRadius: '3px', padding: '3px 8px' }}>
@@ -350,7 +412,6 @@ export default function Hero() {
           <MiniClockReal />
         </div>
 
-        {/* Top bar line 2: Socials */}
         <div style={{ position: 'relative', zIndex: 2, width: '100%', display: 'flex', justifyContent: 'center', gap: '24px', padding: '8px 20px 12px 20px', borderBottom: '1px solid rgba(184,154,255,0.1)' }}>
           {SOCIALS.map(s => (
             <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, letterSpacing: '0.1em', fontSize: '0.7rem', color: 'rgba(255,255,255,0.6)', textDecoration: 'none' }}>
@@ -359,7 +420,6 @@ export default function Hero() {
           ))}
         </div>
 
-        {/* Header content */}
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 24px', width: '100%' }}>
           <GlitchWordmark />
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.18em', color: '#fff', marginTop: '2px' }}>NOCTIRION VALE</div>
@@ -384,7 +444,7 @@ export default function Hero() {
     )
   }
 
-  // Desktop version (unchanged)
+  // Desktop version
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', padding: '0 clamp(24px,4vw,60px)', gap: '0 clamp(20px,3vw,48px)' }}>
       {BG}
