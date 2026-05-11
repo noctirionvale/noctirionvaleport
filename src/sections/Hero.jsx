@@ -225,14 +225,14 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
   const frameContent = () => (
     <div
       style={{
-        border: '1px solid rgba(184,154,255,0.35)',
+        border: `1px solid ${hovered ? 'rgba(255,140,0,0.6)' : 'rgba(255,140,0,0.3)'}`,
         borderRadius: '6px',
         background: 'rgba(7,9,31,0.85)',
         backdropFilter: 'blur(8px)',
         boxShadow: hovered
-          ? '0 0 0 1px rgba(184,154,255,0.5), 0 8px 32px rgba(0,0,0,0.7)'
-          : '0 0 0 1px rgba(184,154,255,0.15), 0 8px 32px rgba(0,0,0,0.5)',
-        transition: 'box-shadow 0.3s',
+          ? '0 0 0 1px rgba(255,140,0,0.4), 0 8px 32px rgba(0,0,0,0.7)'
+          : '0 0 0 1px rgba(255,140,0,0.2), 0 8px 32px rgba(0,0,0,0.5)',
+        transition: 'box-shadow 0.3s, border-color 0.3s',
         overflow: 'hidden',
         width: size.width,
         display: 'flex',
@@ -250,8 +250,8 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '7px 12px',
-          borderBottom: '1px solid rgba(184,154,255,0.15)',
-          background: 'rgba(184,154,255,0.04)',
+          borderBottom: `1px solid ${hovered ? 'rgba(255,140,0,0.4)' : 'rgba(255,140,0,0.2)'}`,
+          background: 'rgba(255,140,0,0.04)',
           userSelect: 'none',
           cursor: 'grab',
           touchAction: 'none',
@@ -261,7 +261,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 6px #ff4444', animation: 'blink 1.4s infinite' }} />
           <span style={{ fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.14em', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>LIVE</span>
         </div>
-        <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontStyle: 'italic', fontSize: '0.78rem', letterSpacing: '0.12em', color: 'rgba(184,154,255,0.7)', textTransform: 'uppercase' }}>{videoTitle}</span>
+        <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontStyle: 'italic', fontSize: '0.78rem', letterSpacing: '0.12em', color: 'rgba(255,140,0,0.8)', textTransform: 'uppercase' }}>View My Projects</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>⋮⋮</span>
           {mobile && onClose && (
@@ -275,7 +275,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
           )}
           {!mobile && (
             <div style={{ display: 'flex', gap: '3px' }}>
-              {[0,1,2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: i === 0 ? 'rgba(184,154,255,0.5)' : 'rgba(255,255,255,0.1)' }} />)}
+              {[0,1,2].map(i => <span key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: i === 0 ? 'rgba(255,140,0,0.6)' : 'rgba(255,255,255,0.1)' }} />)}
             </div>
           )}
         </div>
@@ -285,8 +285,8 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
       <div style={{ position: 'relative', width: size.width, height: size.height, overflow: 'hidden' }}>
         <iframe key={videoUrl} width="100%" height="100%" src={videoUrl} title={videoTitle} frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" style={{ display: 'block', width: '100%', height: '100%' }} />
         <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px)' }} />
-        <div style={{ position: 'absolute', top: 8, left: 8, width: 14, height: 14, borderTop: '1px solid rgba(184,154,255,0.6)', borderLeft: '1px solid rgba(184,154,255,0.6)' }} />
-        <div style={{ position: 'absolute', bottom: 8, right: 8, width: 14, height: 14, borderBottom: '1px solid rgba(184,154,255,0.6)', borderRight: '1px solid rgba(184,154,255,0.6)' }} />
+        <div style={{ position: 'absolute', top: 8, left: 8, width: 14, height: 14, borderTop: '1px solid rgba(255,140,0,0.7)', borderLeft: '1px solid rgba(255,140,0,0.7)' }} />
+        <div style={{ position: 'absolute', bottom: 8, right: 8, width: 14, height: 14, borderBottom: '1px solid rgba(255,140,0,0.7)', borderRight: '1px solid rgba(255,140,0,0.7)' }} />
         <div
           ref={resizeHandleRef}
           className="resize-handle"
@@ -298,14 +298,14 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
             width: mobile ? 32 : 22,
             height: mobile ? 32 : 22,
             cursor: 'nw-resize',
-            background: 'rgba(184,154,255,0.3)',
+            background: 'rgba(255,140,0,0.4)',
             borderTopLeftRadius: '6px',
             zIndex: 20,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: mobile ? '16px' : '11px',
-            color: 'rgba(255,255,255,0.6)',
+            color: 'rgba(255,255,255,0.8)',
             pointerEvents: 'auto',
           }}
         >
@@ -313,27 +313,32 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '7px 12px', borderTop: '1px solid rgba(184,154,255,0.1)', background: 'rgba(184,154,255,0.02)', gap: '10px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Clock />
-          <span style={{ fontFamily: "'Barlow Condensed',sans-serif", fontStyle: 'italic', fontSize: '0.7rem', letterSpacing: '0.06em', color: 'rgba(184,154,255,0.55)' }}> also watch livestream</span>
-          <button
-            onClick={resetPosition}
-            onTouchEnd={(e) => { e.stopPropagation(); resetPosition(); }}
-            style={{ background: 'none', border: 'none', color: 'rgba(184,154,255,0.6)', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
-            title="Reset position"
-          >
-            ⟳
-          </button>
-        </div>
+      {/* Footer – orange accents */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '38px' }}>
+    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.08em', color: 'rgba(255,140,0,0.9)' }}>
+      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+    </div>
+    <div style={{ fontSize: '0.6rem', color: 'rgba(255,140,0,0.6)', fontFamily: 'monospace', letterSpacing: '0.05em', textAlign: 'left', marginLeft: '0px' }}>
+      {new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+    </div>
+  </div>
+  <button
+    onClick={resetPosition}
+    onTouchEnd={(e) => { e.stopPropagation(); resetPosition(); }}
+    style={{ background: 'none', border: 'none', color: 'rgba(255,140,0,0.6)', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
+    title="Reset position"
+  >
+    ⟳
+  </button>
+</div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <a
             href="https://www.vaibes.pro"
             target="_blank"
             rel="noopener noreferrer"
             onTouchEnd={(e) => e.stopPropagation()}
-            style={{ fontFamily: 'monospace', fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(184,154,255,0.6)', textDecoration: 'none', pointerEvents: 'auto' }}
+            style={{ fontFamily: 'monospace', fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(255,140,0,0.6)', textDecoration: 'none', pointerEvents: 'auto' }}
           >
             vaibes.pro ↗
           </a>
@@ -341,7 +346,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
             <button
               onTouchEnd={(e) => { e.stopPropagation(); setEditMode(true); }}
               onClick={() => setEditMode(true)}
-              style={{ background: 'none', border: 'none', color: 'rgba(184,154,255,0.5)', cursor: 'pointer', fontSize: '9px', fontFamily: 'monospace' }}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,140,0,0.5)', cursor: 'pointer', fontSize: '9px', fontFamily: 'monospace' }}
             >
               🎬 source
             </button>
@@ -352,7 +357,7 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
                 value={tempUrl}
                 onChange={e => setTempUrl(e.target.value)}
                 placeholder="Paste YouTube URL"
-                style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(184,154,255,0.3)', borderRadius: '3px', padding: '2px 6px', fontSize: '9px', color: '#fff', width: '130px', pointerEvents: 'auto' }}
+                style={{ background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,140,0,0.3)', borderRadius: '3px', padding: '2px 6px', fontSize: '9px', color: '#fff', width: '130px', pointerEvents: 'auto' }}
               />
               <button
                 onTouchEnd={(e) => { e.stopPropagation(); applyVideoSource(); }}
@@ -422,9 +427,8 @@ export default function Hero() {
 
         <div style={{ position: 'relative', zIndex: 2, textAlign: 'center', padding: '0 24px', width: '100%' }}>
           <GlitchWordmark />
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.9rem', letterSpacing: '0.18em', color: '#fff', marginTop: '2px' }}>NOCTIRION VALE</div>
           <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.88rem', lineHeight: 1.4, color: 'var(--purple-light)', textTransform: 'uppercase', letterSpacing: '0.04em', marginTop: '10px', opacity: 0.8 }}>
-            Building things people can use.<br />Still figuring out the rest.
+            BUILDING THINGS<br />PEOPLE ACTUALLY USE.
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center', marginTop: '12px' }}>
             {STACK_PILLS.map(s => <span key={s} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.62rem', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.32)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '2px 9px' }}>{s}</span>)}
@@ -458,10 +462,9 @@ export default function Hero() {
         </div>
         <div>
           <GlitchWordmark />
-          <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 'clamp(0.85rem,1.4vw,1.2rem)', letterSpacing: '0.18em', color: '#fff', marginTop: '4px' }}>NOCTIRION VALE</div>
         </div>
         <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: 'clamp(1rem,1.8vw,1.45rem)', lineHeight: 1.25, color: 'var(--purple-light)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-          Building things<br />people can use. Still<br />figuring out the rest.
+          BUILDING THINGS<br />PEOPLE ACTUALLY USE.
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
           {STACK_PILLS.map(s => <span key={s} style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.38)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '20px', padding: '3px 11px' }}>{s}</span>)}

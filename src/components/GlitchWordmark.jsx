@@ -49,57 +49,63 @@ export default function GlitchWordmark() {
     userSelect: 'none',
   }
 
+  // Orange palette
+  const orangeBase = '#ff8c00'       // vibrant orange
+  const orangeDark = '#cc5500'       // deep burnt orange
+  const orangeShadow = '#aa4400'
+
   if (!glitching) {
     return (
       <div style={{ ...baseStyle, position: 'relative' }}>
         <span style={{
-          color: '#4169e1',
-          textShadow: '3px 3px 0px #1a1a6e, 6px 6px 0px #0d0d4a, 1px 1px 0px rgba(255,255,255,0.1)',
+          color: orangeBase,
+          textShadow: `3px 3px 0px ${orangeDark}, 6px 6px 0px ${orangeShadow}, 1px 1px 0px rgba(255,255,255,0.15)`,
         }}>
-          PORTFOLIO
+          NOCTIRION VALE
         </span>
       </div>
     )
   }
 
+  // Glitch channels: warm orange/red, greenish‑yellow, and a cooler orange/amber
   return (
     <div style={{ ...baseStyle, position: 'relative', display: 'inline-block' }}>
-      {/* Red channel */}
+      {/* Red/Orange channel – aggressive glow */}
       <span style={{
         position: 'absolute',
         top: 0, left: 0,
-        color: 'red',
-        opacity: 0.75,
+        color: '#ff5500',
+        opacity: 0.8,
         transform: `translate(${o.r[0]}px, ${o.r[1]}px)`,
         mixBlendMode: 'screen',
         pointerEvents: 'none',
-      }}>PORTFOLIO</span>
-      {/* Green channel */}
+      }}>NOCTIRION VALE</span>
+      {/* Yellow/Amber channel – bright contrast */}
       <span style={{
         position: 'absolute',
         top: 0, left: 0,
-        color: '#00ff88',
+        color: '#ffcc00',
         opacity: 0.75,
         transform: `translate(${o.g[0]}px, ${o.g[1]}px)`,
         mixBlendMode: 'screen',
         pointerEvents: 'none',
-      }}>PORTFOLIO</span>
-      {/* Blue channel */}
+      }}>NOCTIRION VALE</span>
+      {/* Deep orange/rust channel – adds depth */}
       <span style={{
         position: 'absolute',
         top: 0, left: 0,
-        color: '#00cfff',
-        opacity: 0.75,
+        color: '#cc6600',
+        opacity: 0.7,
         transform: `translate(${o.b[0]}px, ${o.b[1]}px)`,
         mixBlendMode: 'screen',
         pointerEvents: 'none',
-      }}>PORTFOLIO</span>
-      {/* Base — slightly faded during glitch */}
+      }}>NOCTIRION VALE</span>
+      {/* Base – faded orange during glitch */}
       <span style={{
-        color: '#4169e1',
-        opacity: 0.6,
-        textShadow: '3px 3px 0px #1a1a6e',
-      }}>PORTFOLIO</span>
+        color: orangeBase,
+        opacity: 0.5,
+        textShadow: `2px 2px 0px ${orangeDark}`,
+      }}>NOCTIRION VALE</span>
     </div>
   )
 }
