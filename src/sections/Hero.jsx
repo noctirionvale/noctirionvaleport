@@ -67,6 +67,12 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
   )
   const [videoTitle, setVideoTitle] = useState('Live Stream')
   const [tempUrl, setTempUrl] = useState('')
+  // Live ticking clock state
+  const [now, setNow] = useState(new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
 
   const headerRef = useRef(null)
   const resizeHandleRef = useRef(null)
@@ -313,25 +319,38 @@ function DraggableResizableBirdcam({ mobile = false, onClose }) {
         </div>
       </div>
 
-      {/* Footer – orange accents */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-  <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '38px' }}>
-    <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.08em', color: 'rgba(255,140,0,0.9)' }}>
-      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-    </div>
-    <div style={{ fontSize: '0.6rem', color: 'rgba(255,140,0,0.6)', fontFamily: 'monospace', letterSpacing: '0.05em', textAlign: 'left', marginLeft: '0px' }}>
-      {new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
-    </div>
-  </div>
-  <button
-    onClick={resetPosition}
-    onTouchEnd={(e) => { e.stopPropagation(); resetPosition(); }}
-    style={{ background: 'none', border: 'none', color: 'rgba(255,140,0,0.6)', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
-    title="Reset position"
-  >
-    ⟳
-  </button>
-</div>
+      {/* Footer – fixed layout with live clock */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '7px 12px',
+        borderTop: `1px solid ${hovered ? 'rgba(255,140,0,0.3)' : 'rgba(255,140,0,0.15)'}`,
+        background: 'rgba(255,140,0,0.02)',
+        gap: '10px',
+        flexWrap: 'wrap',
+      }}>
+        {/* Left: stacked time/date + reset button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '38px' }}>
+            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '0.9rem', letterSpacing: '0.08em', color: 'rgba(255,140,0,0.9)' }}>
+              {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </div>
+            <div style={{ fontSize: '0.6rem', color: 'rgba(255,140,0,0.6)', fontFamily: 'monospace', letterSpacing: '0.05em', textAlign: 'left', marginLeft: '0px' }}>
+              {now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+            </div>
+          </div>
+          <button
+            onClick={resetPosition}
+            onTouchEnd={(e) => { e.stopPropagation(); resetPosition(); }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,140,0,0.6)', cursor: 'pointer', fontSize: '0.9rem', padding: '2px 4px' }}
+            title="Reset position"
+          >
+            ⟳
+          </button>
+        </div>
+
+        {/* Right: vaibes.pro link & edit source */}
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <a
             href="https://www.vaibes.pro"
