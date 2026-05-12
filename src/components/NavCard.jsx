@@ -162,7 +162,7 @@ function ContactContent({ onClose }) {
   )
 }
 
-// ── AI PANEL (inline desktop / bottom sheet mobile) ───────────────
+// ── AI PANEL (with conversation memory, surprise me, follow-ups) ───────────────
 function AIPanel({ onOpenContact, isMobile }) {
   const [mode, setMode] = useState('ask')
   const [input, setInput] = useState('')
@@ -170,59 +170,235 @@ function AIPanel({ onOpenContact, isMobile }) {
   const [loading, setLoading] = useState(false)
   const [showPanel, setShowPanel] = useState(false)
   const [hoveredMode, setHoveredMode] = useState(null)
+  const [conversation, setConversation] = useState([])   // stores { role, content }
   const inputRef = useRef(null)
+
   const currentMode = MODES.find(m => m.id === mode)
   const modeColors = { ask: '#4169e1', vibe: '#b89aff', build: '#ff6a00' }
   const activeColor = modeColors[mode]
   const previewMode = hoveredMode || mode
   const previewColor = modeColors[previewMode]
 
-  const submit = async (text) => {
+  // Improved system prompts (narrative, tone, fallbacks)
+  const enhancedPrompts = {
+    ask: `You are the portfolio AI for Loumel Luceño (studio: Noctirion Vale), a self-taught Filipino web developer. You speak in third person about Loumel. Tone: direct, warm, quietly confident. Never oversell. Never hedge with "I think" or "perhaps". State facts cleanly. Max 100 words.
+
+THE STORY:
+Loumel spent years in education, hospitality, and 7 years running an online business before pivoting into web development. Within months he shipped two live SaaS products — not demos, not tutorials — real deployed apps with real users. He uses AI as a pair-programmer deliberately, not blindly. He reviews every line. He knows what he doesn't know and says so openly.
+
+CURRENT STATUS: Open to work. Seeking a mentorship-driven paid internship or junior role. Philippines-based. Remote-ready. Contact: noctirionvale@gmail.com
+
+PROJECTS:
+- vAIbes (vaibes.pro) — LIVE. Full-stack AI productivity SaaS. React, Supabase, Node.js, DeepSeek LLM, Google Cloud TTS, Google Vision, OAuth 2.0, JWT, RLS, real-time DMs, tiered billing, rate limiting, MediaSession API.
+- Knovia (knovia.site) — IN DEVELOPMENT. Competitive knowledge championship platform. AI quiz engine, anti-cheat system, weekly brackets, leaderboards, real-time chat.
+
+STACK: React, JavaScript ES6+, HTML/CSS, Supabase (PostgreSQL/RLS/Realtime), Node.js, Vercel Serverless, Vite, Git, DeepSeek, Google Cloud TTS, Google Vision AI, Dodo Payments, OAuth 2.0, JWT
+
+HONEST GAPS:
+Still learning TypeScript, Jest/RTL, system design at scale, advanced SQL. Openly acknowledges this.
+
+RULES:
+- If asked about salary/rate: "Open to discussion based on the role and team."
+- If asked something not in these facts: "That's not something I have on file — reach out directly at noctirionvale@gmail.com"
+- Never make up projects or experience.
+- End responses with a natural next step when appropriate: view vaibes.pro, or contact directly.`,
+
+    vibe: `You are a creative vibe-matching assistant for Loumel Luceño's portfolio (Noctirion Vale).
+
+When someone describes an aesthetic, mood, or project vibe, respond with:
+1. Match it to Loumel's work or style in 1 line
+2. A 3-word aesthetic tag for the vibe
+3. Three hex colors with short names
+
+Keep it punchy and creative. Under 80 words.
+Be slightly playful but never cringe.
+
+Loumel's work leans: dark, editorial, precise, functional-first. vAIbes = moody AI tool.
+Knovia = competitive, electric, sharp.
+
+If the vibe they describe doesn't match his work at all — say so honestly in a fun way, then suggest what he could build for that vibe.`,
+
+    build: `You are a project scoping assistant for Loumel Luceño (Noctirion Vale).
+
+When someone describes a project idea, respond:
+1. Recommended stack from what Loumel knows: React, Supabase, Node.js, Vercel, DeepSeek
+2. Complexity: Simple / Medium / Complex
+3. Realistic timeline
+4. One honest caveat or risk
+
+Tone: like a senior dev giving real advice. No hype. No padding. Under 100 words.
+
+End with:
+"Interested? Hit SEND TO LOU to start the conversation." — always on its own line.
+
+If the idea is outside Loumel's current stack (e.g. mobile app, blockchain) — be honest about it and suggest what he could contribute.`,
+  }
+
+  // Surprise me questions
+  const surpriseQuestions = {
+    ask: [
+      "What's the hardest bug Loumel ever fixed?",
+      "Why did he leave hospitality for tech?",
+      "What would Loumel build if money wasn't an issue?",
+      "What does he do that AI can't?",
+      "What's he most proud of building?"
+    ],
+    vibe: [
+      "Give me a palette for 'midnight coding session'",
+      "What vibe fits a productivity tool for overthinkers?",
+      "Match a color scheme to 'crunch mode'",
+      "Describe vAIbes in three words and a color"
+    ],
+    build: [
+      "A real‑time leaderboard for a quiz app",
+      "An AI that summarizes Slack threads",
+      "A mobile‑first habit tracker",
+      "A dashboard for indie hackers"
+    ]
+  }
+
+  const getFollowUps = (mode) => {
+    switch (mode) {
+      case 'ask':
+        return ["What was hardest about building vAIbes?", "Is he available this month?", "What's his learning style?"]
+      case 'vibe':
+        return ["Try 'neon noir'", "Try 'cozy rainy day'", "Try 'startup hustle'"]
+      case 'build':
+        return ["Can you scope a chatbot?", "What about a crypto dashboard?", "How long for a MVP?"]
+      default:
+        return []
+    }
+  }
+
+  const submit = async (text, isFollowUp = false) => {
     const query = (text || input).trim()
     if (!query || loading) return
+
+    // Add user message to conversation
+    const updatedConversation = [...conversation, { role: 'user', content: query }]
+    setConversation(updatedConversation)
     setLoading(true)
     setShowPanel(true)
     setResponse('')
+
     try {
-      const res = await fetch('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: query, mode }) })
+      const res = await fetch('/api/ai-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: query,
+          mode,
+          conversation: updatedConversation, // send full history (server must handle)
+        })
+      })
       const data = await res.json()
       if (data.reply) {
+        // Typewriter effect
         let i = 0
         const rawReply = data.reply.replace(/\*\*(.*?)\*\*/g, '$1').replace(/\*(.*?)\*/g, '$1').replace(/^\d+\.\s/gm, '').trim()
-        const chars = rawReply
         const typeNext = () => {
-          if (i < chars.length) { setResponse(chars.slice(0, i + 1)); i++; setTimeout(typeNext, 12) }
-          else setLoading(false)
+          if (i < rawReply.length) {
+            setResponse(rawReply.slice(0, i + 1))
+            i++
+            setTimeout(typeNext, 12)
+          } else {
+            setLoading(false)
+            // Add assistant reply to conversation
+            setConversation(prev => [...prev, { role: 'assistant', content: rawReply }])
+          }
         }
         typeNext()
-      } else { setResponse('Something went wrong. Try again.'); setLoading(false) }
-    } catch { setResponse('Could not reach the server. Try again.'); setLoading(false) }
-    setInput('')
+      } else {
+        setResponse('Something went wrong. Try again.')
+        setLoading(false)
+      }
+    } catch {
+      setResponse('Could not reach the server. Try again.')
+      setLoading(false)
+    }
+    if (!isFollowUp) setInput('')
   }
 
-  const handleKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() } }
-  const handleHint = (hint) => { setInput(hint); submit(hint) }
+  const handleKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      submit()
+    }
+  }
+
+  const handleHint = (hint) => {
+    setInput(hint)
+    submit(hint)
+  }
+
+  const handleSurprise = () => {
+    const questions = surpriseQuestions[mode] || surpriseQuestions.ask
+    const random = questions[Math.floor(Math.random() * questions.length)]
+    setInput(random)
+    submit(random)
+  }
 
   const responsePanel = (
-    <div style={{ background: 'rgba(7,9,31,0.98)', borderTop: `2px solid ${activeColor}`, padding: '14px 16px 80px', overflowY: 'auto', maxHeight: isMobile ? '65vh' : '220px' }}>
+    <div style={{ background: 'rgba(7,9,31,0.98)', borderTop: `2px solid ${activeColor}`, padding: '14px 16px', overflowY: 'auto', maxHeight: isMobile ? '65vh' : '280px', paddingBottom: isMobile ? '80px' : '14px' }}>
       <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.14em', color: activeColor, marginBottom: '8px', opacity: 0.8 }}>
-        {mode === 'ask' ? '🤖 PORTFOLIO AI' : mode === 'vibe' ? '🎨 VIBE CHECK' : '🔧 SCOPE REPORT'}
+        {mode === 'ask' && '🤖 Loumel\'s AI answered · ASK MODE'}
+        {mode === 'vibe' && '🎨 VIBE CHECK · AI answer'}
+        {mode === 'build' && '🔧 SCOPE REPORT · AI answer'}
       </div>
       <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '0.85rem', lineHeight: 1.65, color: 'rgba(255,255,255,0.82)', whiteSpace: 'pre-wrap' }}>
         {response || <span style={{ opacity: 0.4 }}>Thinking...</span>}
       </div>
       {!loading && response && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-          style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', paddingBottom: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <button onClick={() => { setShowPanel(false); setResponse(''); inputRef.current?.focus() }}
-            style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}>
-            ASK AGAIN
-          </button>
-          <button onClick={onOpenContact}
-            style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '4px', border: 'none', background: 'linear-gradient(135deg,#ff4500,#ff8c00)', color: '#1a0800', cursor: 'pointer' }}>
-            SEND TO LOU →
-          </button>
-        </motion.div>
+        <>
+          {/* Follow‑up suggestions */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <div style={{ fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.4)', marginBottom: '6px' }}>
+              Want to dig deeper? Try asking:
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {getFollowUps(mode).map(q => (
+                <button
+                  key={q}
+                  onClick={() => submit(q, true)}
+                  style={{
+                    fontFamily: "'Barlow Condensed',sans-serif",
+                    fontWeight: 700,
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.06em',
+                    padding: '4px 10px',
+                    borderRadius: '20px',
+                    border: `1px solid ${activeColor}40`,
+                    background: `${activeColor}12`,
+                    color: 'rgba(255,255,255,0.8)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {q}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              onClick={() => { setShowPanel(false); setResponse(''); inputRef.current?.focus() }}
+              style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.65rem', letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: 'rgba(255,255,255,0.5)', cursor: 'pointer' }}
+            >
+              ASK AGAIN
+            </button>
+            <button
+              onClick={onOpenContact}
+              style={{ fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 800, fontSize: '0.65rem', letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '4px', border: 'none', background: 'linear-gradient(135deg,#ff4500,#ff8c00)', color: '#1a0800', cursor: 'pointer' }}
+            >
+              SEND TO LOU →
+            </button>
+          </div>
+        </>
       )}
     </div>
   )
@@ -234,7 +410,8 @@ function AIPanel({ onOpenContact, isMobile }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
-      style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `2px solid transparent`, display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      style={{ padding: '8px 10px', background: 'rgba(7,9,31,0.97)', borderTop: `1px solid ${previewColor}30`, display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}
+    >
       <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>
         {previewMode === 'ask' ? 'TRY ASKING' : previewMode === 'vibe' ? 'TRY A VIBE' : 'TRY DESCRIBING'}
       </div>
@@ -244,6 +421,10 @@ function AIPanel({ onOpenContact, isMobile }) {
           {h}
         </button>
       ))}
+      <button onClick={handleSurprise}
+        style={{ marginLeft: 'auto', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '20px', border: `1px solid rgba(255,255,255,0.2)`, background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>
+        🎲 Surprise me
+      </button>
     </motion.div>
   )
 
@@ -253,7 +434,7 @@ function AIPanel({ onOpenContact, isMobile }) {
       <div style={{ display: 'flex', borderTop: '1px solid rgba(0,0,0,0.2)' }}>
         {MODES.map(m => (
           <button key={m.id}
-            onClick={() => { setMode(m.id); setShowPanel(false); setResponse(''); setInput(''); setHoveredMode(null) }}
+            onClick={() => { setMode(m.id); setShowPanel(false); setResponse(''); setInput(''); setHoveredMode(null); setConversation([]); }}
             onMouseEnter={() => { if (!showPanel) setHoveredMode(m.id) }}
             onMouseLeave={() => setHoveredMode(null)}
             style={{ flex: 1, padding: '8px 4px', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.6rem', letterSpacing: '0.06em', border: 'none', cursor: 'pointer', background: (hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.15)', color: (hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? '#fff' : 'rgba(255,255,255,0.4)', borderBottom: `2px solid ${(hoveredMode === m.id || (!hoveredMode && mode === m.id)) ? modeColors[m.id] : 'transparent'}`, transition: 'all 0.15s' }}>
@@ -299,29 +480,28 @@ function AIPanel({ onOpenContact, isMobile }) {
       {/* Mobile bottom sheet */}
       {isMobile && (
         <AnimatePresence>
-          {(showPanel || true) && (
+          {showPanel && (
             <motion.div
               initial={{ y: '100%' }}
-              animate={{ y: showPanel ? 0 : '100%' }}
+              animate={{ y: 0 }}
               exit={{ y: '100%' }}
               transition={{ type: 'spring', stiffness: 300, damping: 32 }}
-              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, borderRadius: '20px 20px 0 0', overflow: 'hidden', boxShadow: '0 -8px 60px rgba(0,0,0,0.7)', paddingBottom: '0' }}>
-              {/* Sheet handle */}
+              style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 100, borderRadius: '20px 20px 0 0', overflow: 'hidden', boxShadow: '0 -8px 60px rgba(0,0,0,0.7)' }}>
               <div style={{ background: 'rgba(7,9,31,0.98)', padding: '10px 16px 8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ width: 32, height: 1 }} />
                 <div style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.2)' }} />
                 <button onClick={() => { setShowPanel(false); setResponse('') }}
                   style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: '50%', width: 28, height: 28, color: 'rgba(255,255,255,0.5)', fontSize: '0.75rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
               </div>
-              {!showPanel ? hintPanel : responsePanel}
+              {responsePanel}
             </motion.div>
           )}
         </AnimatePresence>
       )}
 
-      {/* Mobile hint chips — shown inline below input on mobile */}
+      {/* Mobile inline hints – only when panel is closed */}
       {isMobile && !showPanel && (
-        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `2px solid ${activeColor}`, padding: '8px 10px 100px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
+        <div style={{ background: 'rgba(7,9,31,0.97)', borderTop: `1px solid ${activeColor}30`, padding: '8px 10px 16px', display: 'flex', flexWrap: 'wrap', gap: '6px', borderRadius: '0 0 14px 14px' }}>
           <div style={{ width: '100%', fontFamily: "'Barlow Condensed',sans-serif", fontSize: '0.6rem', letterSpacing: '0.12em', color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>TRY ASKING</div>
           {HINTS[mode].map(h => (
             <button key={h} onClick={() => handleHint(h)}
@@ -329,6 +509,10 @@ function AIPanel({ onOpenContact, isMobile }) {
               {h}
             </button>
           ))}
+          <button onClick={handleSurprise}
+            style={{ marginLeft: 'auto', fontFamily: "'Barlow Condensed',sans-serif", fontWeight: 700, fontSize: '0.7rem', letterSpacing: '0.06em', padding: '4px 10px', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer' }}>
+            🎲 Surprise
+          </button>
         </div>
       )}
     </>
